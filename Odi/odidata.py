@@ -455,8 +455,3 @@ class Odidata:
         else:
             # print("<[{}]> No candidate bets at this time.".format(str(datetime.datetime.now())))
             return self._second_basis_ready_bet_buttons_list
-
-
-if __name__ == '__main__':
-    odidata = Odidata()
-    print(odidata.first_basis_ready_bet_buttons())
