@@ -40,9 +40,9 @@ class Odibot(Odibets):
             return self.current_stake
 
         else:
-            Exception("Your account balance is not enough.")
+            raise Exception("Your account balance is not enough.")
 
-    def run_first_basis(self, minimum_time):
+    def run_first_basis(self, minimum_time=50):
 
         first_basis_counter = 0
         while True:
@@ -77,7 +77,7 @@ class Odibot(Odibets):
         ))
         print("------------------------------------------------------------------------------------------------\n\n\n")
 
-    def run_second_basis(self, minimum_time):
+    def run_second_basis(self, minimum_time=0):
 
         second_basis_counter = 0
         while True:
