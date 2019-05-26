@@ -1,5 +1,3 @@
-import sqlite3
-
 from sqlalchemy import create_engine
 from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy.orm import sessionmaker
