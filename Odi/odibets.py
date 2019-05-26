@@ -235,6 +235,22 @@ class Odibets(Odidata):
         except requests.ConnectionError:
             raise Exception("Failed to fetch closed bets html.")
 
+    def _update_db(self):
+        # Fetch the data to be inserted into the database
+        update_data = self._previous_closed_bet_metadata()
+
+        # Create a new row/entry for the database
+        latest_closed_bet_data = BetHistory(
+            bet_href=update_data['bet_href_id'],
+            won=update_data['won'],
+            bet_odds=update_data['bet_odds'],
+            profit=update_data['net_profit']
+        )
+
+        # Add the new row to the database and commit
+        db_session.add(latest_closed_bet_data)
+        db_session.commit()
+
     @staticmethod
     def _check_if_closed_bet_won(closed_bet_tag_object):
         # check to see if latest bet was won
@@ -268,25 +284,12 @@ class Odibets(Odidata):
 
         return net_profit
 
-    def _update_db(self):
-        # Fetch the data to be inserted into the database
-        update_data = self._previous_closed_bet_metadata()
-
-        # Create a new row/entry for the database
-        latest_closed_bet_data = BetHistory(
-            bet_href=update_data['bet_href_id'],
-            won=update_data['won'],
-            bet_odds=update_data['bet_odds'],
-            profit=update_data['net_profit']
-        )
-
-        # Add the new row to the database and commit
-        db_session.add(latest_closed_bet_data)
-        db_session.commit()
-
     def _add_bet_to_betslip(self, match_id, parent_match_id, home_team, away_team, start_time, periodic_time, sport_id,
                             sub_type_id, oddtype, live, outcome_id, outcome_name, outcome_alias, odd_value, specifiers,
                             custom, freebet):
+
+        # Use the authenticated `requests.Session` object
+        authenticated_session = self._session
 
         # A bunch of verbose nonsense needed to place a bet
         params = "match_id=" + match_id + "&sub_type_id=" + sub_type_id + "&outcome_name=" + \
@@ -303,7 +306,7 @@ class Odibets(Odidata):
             "Accept-Charset": "utf-8"
         }
         try:
-            add_bet_action = self._session.post(url=self._addbet_link, data=params, headers=headers)
+            add_bet_action = authenticated_session.post(url=self._addbet_link, data=params, headers=headers)
             return add_bet_action
 
         except exceptions.ConnectionError:
