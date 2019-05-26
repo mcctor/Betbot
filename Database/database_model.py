@@ -5,7 +5,7 @@ from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-engine = create_engine('sqlite:///sqlite_db', echo=False)
+engine = create_engine('sqlite:///sqliteDB', echo=False)
 
 Session = sessionmaker(bind=engine)
 db_session = Session()
