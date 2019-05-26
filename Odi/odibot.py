@@ -35,7 +35,7 @@ class Odibot(Odibets):
 
             self.current_stake = self.current_stake - stake
 
-            print("<[{}]> Stake set for this betslip is {}".format(str(datetime.datetime.now()), self.current_stake))
+            print("<[{}]> Stake set for this betslip is {}".format(str(datetime.datetime.now()), stake))
 
             return self.current_stake
 
