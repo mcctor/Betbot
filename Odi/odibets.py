@@ -1,4 +1,5 @@
 import time
+import math
 import datetime
 import random
 import json
@@ -9,6 +10,7 @@ from requests import exceptions
 from bs4 import BeautifulSoup
 
 from Odi.odidata import Odidata
+from Database.database_model import db_session, BetHistory
 
 
 class Odibets(Odidata):
@@ -20,6 +22,7 @@ class Odibets(Odidata):
     _withdraw_link = "https://odibets.com/withdraw"
 
     _addbet_link = "https://odibets.com/bet/add"
+    _closed_bet_link = "https://odibets.com/my-bets?tab=2"
     _bet_link = "https://odibets.com/bet"
     _set_bet_stake_link = "https://odibets.com/bet/stake"
 
@@ -208,6 +211,79 @@ class Odibets(Odidata):
         except exceptions.ConnectionError:
             raise Exception("Failed to withdraw specified amount. Check your internet connection.")
 
+    def _previous_closed_bet_metadata(self):
+        # Use the authenticated `requests.Session` object
+        authenticated_session = self._session
+
+        try:
+            # Get closed bets html
+            request = authenticated_session.get(url=self._closed_bet_link)
+
+            html_soup = BeautifulSoup(request.content, 'html.parser')
+
+            latest_closed_bet = html_soup.find('div', attrs={'class': 'l-mybets-section-body'}).a
+
+            latest_closed_bet_json = {
+                "bet_href_id": latest_closed_bet['href'],
+                "won": self._check_if_closed_bet_won(latest_closed_bet),
+                "bet_odds": self._get_closed_bet_total_odd(latest_closed_bet),
+                "net_profit": math.ceil(self._calculate_closed_bet_profit(latest_closed_bet))
+            }
+
+            return latest_closed_bet_json
+
+        except requests.ConnectionError:
+            raise Exception("Failed to fetch closed bets html.")
+
+    @staticmethod
+    def _check_if_closed_bet_won(closed_bet_tag_object):
+        # check to see if latest bet was won
+        if closed_bet_tag_object.find('div', attrs={'class': 'bet-towin'}).small.string == 'Won':
+            return 1
+        else:
+            return 0
+
+    @staticmethod
+    def _get_closed_bet_total_odd(closed_bet_tag_object):
+        # Parse out odd section from the closed_bet_tag_object
+        odd_section = closed_bet_tag_object.find_all('div', attrs={'class': 'bet-details-s'})[1]
+
+        # Type cast string to float, and return the result
+        return float(odd_section.find('span', attrs={'class': 'd'}).string)
+
+    @staticmethod
+    def _calculate_closed_bet_profit(closed_bet_tag_object):
+        # Parse out stake section from the closed_bet_tag_object
+        stake_section = closed_bet_tag_object.find_all('div', attrs={'class': 'bet-details-s'})[-1]
+
+        # Typecast stake to float
+        stake = float(stake_section.find('span', attrs={'class': 'd'}).string.strip('KES. '))
+
+        # Typecast total winnings to float
+        total_profit = float(
+            closed_bet_tag_object.find('div', attrs={'class': 'bet-towin'}).div.string.strip('KES. '))
+
+        # Calculate the closed bet net profit
+        net_profit = total_profit - stake
+
+        return net_profit
+
+    def _update_db(self):
+        # Fetch the data to be inserted into the database
+        update_data = self._previous_closed_bet_metadata()
+
+        # Create a new row/entry for the database
+        latest_closed_bet_data = BetHistory(
+            bet_href=update_data['bet_href_id'],
+            won=update_data['won'],
+            bet_odds=update_data['bet_odds'],
+            profit=update_data['net_profit']
+        )
+
+        # Add the new row to the database and commit
+        db_session.add(latest_closed_bet_data)
+        db_session.commit()
+
     def _add_bet_to_betslip(self, match_id, parent_match_id, home_team, away_team, start_time, periodic_time, sport_id,
                             sub_type_id, oddtype, live, outcome_id, outcome_name, outcome_alias, odd_value, specifiers,
                             custom, freebet):
@@ -302,6 +378,10 @@ class Odibets(Odidata):
             if betslip['status_code'] == 200:
                 print("<[{}]> Successfully added First Basis Bet: {} to betslip.".format(
                     str(datetime.datetime.now()), button['match_id']))
+
+                # Update database with the result of the previous closed bet
+                self._update_db()
+
                 return True
 
         else:
@@ -378,6 +458,10 @@ class Odibets(Odidata):
             if betslip['status_code'] == 200:
                 print("<[{}]> Successfully added Second Basis Bet: {} to betslip.".format(
                     str(datetime.datetime.now()), button['match_id']))
+
+                # Update database with the result of the previous closed bet
+                self._update_db()
+
                 return True
 
         else:
