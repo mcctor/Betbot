@@ -402,7 +402,7 @@ class Odidata:
                 button_attributes = self._parse_bet_button_metadata(button)
 
                 # Ensure the game is live
-                if button_attributes['live'] == "1":
+                if button_attributes['live'] == "1" or button_attributes['live'] == "0":
                     self._first_basis_ready_bet_buttons_list.append(button_attributes)
 
             return self._first_basis_ready_bet_buttons_list
