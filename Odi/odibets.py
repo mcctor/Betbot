@@ -389,7 +389,7 @@ class Odibets(Odidata):
                 logging.info('Successfully added First Basis Bet: %s to betslip', button['match_id'])
 
                 # Update database with the result of the previous closed bet
-                self._update_db()
+                # self._update_db()
 
                 return True
 
@@ -468,7 +468,7 @@ class Odibets(Odidata):
                 logging.info('Successfully added First Basis Bet: %s to betslip', button['match_id'])
 
                 # Update database with the result of the previous closed bet
-                self._update_db()
+                # self._update_db()
 
                 return True
 
