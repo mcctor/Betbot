@@ -22,7 +22,7 @@ class Odibot(Odibets):
         # Fetch user's current account balance
         current_balance = self.account_balance
 
-        if current_balance >= self.current_stake:
+        if float(current_balance) >= float(self.current_stake):
             return True
         else:
             return False
