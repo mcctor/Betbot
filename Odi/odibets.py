@@ -1,6 +1,7 @@
 import time
 import math
 import datetime
+import logging
 import random
 import json
 
@@ -47,10 +48,12 @@ class Odibets(Odidata):
 
         try:
             self._session.post(url=self._login_link, data=login_data)
+
+            logging.info('Successfully logged in User: %s', phone_number)
             return self._session
 
         except exceptions.ConnectionError:
-            print("<[{}]> Cannot login user ... retrying in 3 seconds.".format(str(datetime.datetime.now())))
+            logging.warn('Connection error preventing Logging-In of user.')
 
             # Wait for 3 seconds before trying to log in again.
             time.sleep(3.0)
@@ -82,6 +85,8 @@ class Odibets(Odidata):
                 money = float(money_str.replace(',', ''))
 
                 self._account_balance = money
+                logging.info('Account balance fetched. Currently at %s', self._account_balance)
+
                 return self._account_balance
 
         except exceptions.ConnectionError:
@@ -115,6 +120,7 @@ class Odibets(Odidata):
                 for open_bet in my_bets_section.find_all('a'):
                     self._open_bet_links.append(self._base_website_link + '/' + open_bet['href'])
 
+            logging.info('Open bets have been fetched.')
             return self._open_bet_links
 
         except exceptions.ConnectionError:
@@ -206,6 +212,7 @@ class Odibets(Odidata):
 
         try:
             authenticated_session.post(url=self._withdraw_link, data=withdraw_data)
+            logging.info('Amount %s has been withdrawn from account', self.account_balance)
             return self.account_balance
 
         except exceptions.ConnectionError:
@@ -307,6 +314,7 @@ class Odibets(Odidata):
         }
         try:
             add_bet_action = authenticated_session.post(url=self._addbet_link, data=params, headers=headers)
+            logging.info('Game successfully added to betslip.')
             return add_bet_action
 
         except exceptions.ConnectionError:
@@ -340,8 +348,7 @@ class Odibets(Odidata):
 
         # Check if there are any candidate games ready to be added to betslip
         if len(candidate_games) == 0:
-            print("<[{}]> No candidate bet at this time. Waiting for 2 minutes before trying again".format(
-                str(datetime.datetime.now())))
+            logging.info('No candidate bet at this time. Waiting for 2 minutes before trying again.')
             time.sleep(120)
             return False
 
@@ -379,8 +386,7 @@ class Odibets(Odidata):
             # Check if the betslip was added successfully
             betslip = json.loads(betslip.content.decode('utf-8'), encoding='utf-8')
             if betslip['status_code'] == 200:
-                print("<[{}]> Successfully added First Basis Bet: {} to betslip.".format(
-                    str(datetime.datetime.now()), button['match_id']))
+                logging.info('Successfully added First Basis Bet: %s to betslip', button['match_id'])
 
                 # Update database with the result of the previous closed bet
                 self._update_db()
@@ -420,8 +426,8 @@ class Odibets(Odidata):
 
         # Check if there are any candidate games ready to be added to betslip
         if len(candidate_games) == 0:
-            print("<[{}]> No candidate bet at this time. Waiting for 2 minutes before trying again".format(
-                str(datetime.datetime.now())))
+            logging.info('No candidate bet at this time. Waiting for 2 minutes before trying again.')
+
             time.sleep(120)
             return False
 
@@ -459,8 +465,7 @@ class Odibets(Odidata):
             # Check if the betslip was added successfully
             betslip = json.loads(betslip.content.decode('utf-8'), encoding='utf-8')
             if betslip['status_code'] == 200:
-                print("<[{}]> Successfully added Second Basis Bet: {} to betslip.".format(
-                    str(datetime.datetime.now()), button['match_id']))
+                logging.info('Successfully added First Basis Bet: %s to betslip', button['match_id'])
 
                 # Update database with the result of the previous closed bet
                 self._update_db()
@@ -490,6 +495,8 @@ class Odibets(Odidata):
 
         try:
             stake_request = authenticated_session.post(url=self._set_bet_stake_link, data=stake, headers=headers)
+
+            logging.info('Bet stake of %s has been set for current betslip.', amount)
             return stake_request.status_code
 
         except exceptions.ConnectionError:
@@ -508,6 +515,7 @@ class Odibets(Odidata):
 
         try:
             placed_bets = authenticated_session.post(url=self._bet_link)
+            logging.info('Current betslip has been placed!')
             return placed_bets
 
         except exceptions.ConnectionError:

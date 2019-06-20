@@ -1,10 +1,14 @@
 import time
 import datetime
+import logging
 
 import requests
 
 from requests import exceptions
 from bs4 import BeautifulSoup
+
+
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 
 class Odidata:
@@ -46,11 +50,14 @@ class Odidata:
             for live_games in live_games_html_soup.find_all('div', attrs={'class': 'l-events-games market-3'}):
                 live_games_tags_list.append(live_games)
 
+
+            logging.info('Fetched live games.')
             return live_games_tags_list
 
         except exceptions.ConnectionError:
             print("<[{}]> Connection Error ... Will retry fetching live games in 10 seconds.\b"
                   .format(str(datetime.datetime.now())))
+            logging.warn('Failed to fetch live games due to a Connection Error.')
 
             # Delay for 10 seconds before trying to fetch the resource again
             time.sleep(10.0)
@@ -178,10 +185,10 @@ class Odidata:
 
         # HTML might have contained nothing, so we try executing the method again if that was the case
         else:
-            print('<[{}]> Live-Games-Page returned None ... will retry in 5 seconds'
-                  .format(str(datetime.datetime.now())))
+            logging.warn('Live Games Page returned None.')
             # Wait for 5 seconds before trying again
             time.sleep(5)
+
             self._cleaned_live_games()
 
     def _select_appropriate_matches(self, live_games_json, minimum_time=50):
@@ -280,6 +287,7 @@ class Odidata:
                             except KeyError:
                                 market_odd_value = float(market.button['oddvalue'])
                                 if market_odd_value <= max_odd_value >= min_odd_value:
+                                    logging.info('First basis candidate match found.')
                                     self._first_basis_candidate_market_buttons_list.append(market.button)
 
         return self._first_basis_candidate_market_buttons_list
@@ -329,6 +337,7 @@ class Odidata:
                             except KeyError:
                                 market_odd_value = float(market.button['oddvalue'])
                                 if market_odd_value <= max_odd_value >= min_odd_value:
+                                    logging.info('Second Basis candidate match found.')
                                     self._second_basis_candidate_market_buttons_list.append(market.button)
 
         return self._second_basis_candidate_market_buttons_list
@@ -453,5 +462,4 @@ class Odidata:
             return self._second_basis_ready_bet_buttons_list
 
         else:
-            # print("<[{}]> No candidate bets at this time.".format(str(datetime.datetime.now())))
             return self._second_basis_ready_bet_buttons_list

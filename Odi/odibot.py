@@ -1,5 +1,5 @@
 import time
-import datetime
+import logging
 
 from Odi.odibets import Odibets
 
@@ -35,8 +35,6 @@ class Odibot(Odibets):
 
             self.current_stake = self.current_stake - stake
 
-            print("<[{}]> Stake set for this betslip is {}".format(str(datetime.datetime.now()), stake))
-
             return self.current_stake
 
         else:
@@ -49,33 +47,28 @@ class Odibot(Odibets):
             current_number_of_bets = len(self._my_bets_info())
 
             if current_number_of_bets == 0:
-                print("<[{}]> Finding First Basis Game ... ".format(str(datetime.datetime.now())))
+                logging.info('Finding First Basis Game ...')
                 # If bet is added successfully to a betslip
                 if self.add_first_basis_games_to_betslip(minimum_time=minimum_time):
                     self._ten_percent_stake()
                     self.place_all_bets()
 
                     first_basis_counter += 1
-                    print("<[{}]> First basis counter at {}. Waiting for game to finish ... ".
-                          format(str(datetime.datetime.now()), first_basis_counter))
+                    logging.info('First basis counter at %d. Waiting for game to finish.', first_basis_counter)
                     time.sleep(1800)
 
                 else:
                     continue
 
             else:
-                print("<[{}]> Waiting for current open bets to finish ... ".
-                      format(str(datetime.datetime.now())))
+
+                logging.info('Waiting for current open bets to finish.')
                 time.sleep(300)
 
             if first_basis_counter >= 7:
                 break
 
-        print("\n\n\n------------------------------------------------------------------------------------------")
-        print("<[{}]> Finished with First Basis. Heading to Second Basis Games".format(
-            str(datetime.datetime.now())
-        ))
-        print("------------------------------------------------------------------------------------------------\n\n\n")
+        logging.info('Finished with First Basis. Heading to Second Basis Games.')
 
     def run_second_basis(self, minimum_time=0):
 
@@ -84,7 +77,7 @@ class Odibot(Odibets):
             current_number_of_bets = len(self._my_bets_info())
 
             if current_number_of_bets == 0:
-                print("<[{}]> Finding Second Basis Game ... ".format(str(datetime.datetime.now())))
+                logging.info('Finding Second Basis Game ...')
 
                 # If bet is added successfully, increment the counter
                 if self.add_second_basis_games_to_betslip(minimum_time=minimum_time):
@@ -92,20 +85,15 @@ class Odibot(Odibets):
                     self.place_all_bets()
 
                     second_basis_counter += 1
-                    print("<[{}]> Second basis counter at {}. Waiting for game to finish ... ".
-                          format(str(datetime.datetime.now()), second_basis_counter))
+                    logging.info('Second basis counter at %d. Waiting for game to finish.')
                     time.sleep(3600)
 
                 else:
                     continue
 
             else:
-                print("<[{}]> Waiting for current open bets to finish ... ".
-                      format(str(datetime.datetime.now())))
+                logging.info('Waiting for current open bets to finish.')
                 time.sleep(300)
 
             if second_basis_counter >= 2:
                 break
-
-        print("Finished today's games!!!!!!!!")
-        exit()
