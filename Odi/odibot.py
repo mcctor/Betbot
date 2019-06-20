@@ -30,10 +30,10 @@ class Odibot(Odibets):
     def _ten_percent_stake(self):
 
         if self.is_balance_enough:
-            stake = (10/100) * self.current_stake
+            stake = (10/100) * int(self.current_stake)
             self.set_bet_stake(amount=int(stake))
 
-            self.current_stake = self.current_stake - stake
+            self.current_stake = int(self.current_stake) - stake
 
             return self.current_stake
 
